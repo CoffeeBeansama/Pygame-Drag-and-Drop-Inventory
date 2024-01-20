@@ -1,7 +1,6 @@
 import pygame as pg
 import sys
-from playerinventory import PlayerInventory
-from chestinventory import ChestInventory
+from inventory import Inventory
 from mouse import Mouse
 from settings import fontpath,white
 from timer import Timer
@@ -22,8 +21,7 @@ class Main:
         self.purchaseText = self.font.render("Inventory",True,white)
 
         self.timer = Timer(300)
-        self.playerInventory = PlayerInventory()
-        self.chestInventory = ChestInventory()
+        self.inventory = Inventory()
 
         self.renderInventory = False
     
@@ -32,7 +30,6 @@ class Main:
         self.inventoryButton = drawButton(self.screen,530,430,150,50,self.purchaseText)
 
         # Event
-
         if self.inventoryButton.collidepoint(Mouse.mousePosition()):
             if Mouse.pressingMouseButton() and not self.timer.activated:
                 print("Open Inventory" if not self.renderInventory else "Close Inventory")
@@ -55,8 +52,7 @@ class Main:
             self.handleInventoryButton()
 
             if self.renderInventory:
-               self.playerInventory.update()
-               self.chestInventory.update()
+               self.inventory.update()
 
             pg.display.flip()
 
