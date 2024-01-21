@@ -6,6 +6,11 @@ from settings import spritepath
 from timer import Timer
 from mouse import Mouse
 
+class MouseItemObject:
+    def __init__(self,data,sprite):
+        self.data = data
+        self.sprite = sprite
+
 class Inventory:
     def __init__(self):
         self.screen = pg.display.get_surface()
@@ -16,6 +21,10 @@ class Inventory:
         self.initializePrimaryInventory()
         self.initializeSecondaryInventory()
         
+        self.itemHolding = None
+        
+        self.slotToSwap = None
+
         self.timer = Timer(300)
 
     def initializePrimaryInventory(self):
@@ -84,15 +93,35 @@ class Inventory:
             slot.background = drawBox(self.screen,slot.pos[0],slot.pos[1],self.slotSize,self.slotSize)
             if slot.itemData:
                slot.itemSprite = self.screen.blit(self.imageSprites[slot.itemData],(slot.pos[0]+3,slot.pos[1]+3))
+    
+
+    def canHoldItem(self):
+        if Mouse.pressingMouseButton() and not self.timer.activated:
+           if self.itemHolding is None:
+              return True
+        return False
 
     def handleMouseEvent(self):
         for slot in self.P_itemSlots:
             if slot.background:
                 if slot.background.collidepoint(Mouse.mousePosition()):
-                   if Mouse.pressingMouseButton() and not self.timer.activated:
-                       print(slot.itemData)
+                    if self.canHoldItem():
+                       self.itemHolding = MouseItemObject(slot.itemData,self.imageSprites[slot.itemData])
+                       self.slotToSwap = slot
                        self.timer.activate()
 
+        if Mouse.pressingMouseButton() and self.itemHolding:
+           self.screen.blit(self.itemHolding.sprite,
+                            (Mouse.mousePosition()[0]-20,Mouse.mousePosition()[1]-20))
+        else:
+            if self.itemHolding:
+                for slot in self.P_itemSlots + self.S_itemSlots:
+                    if slot.background.collidepoint(Mouse.mousePosition()):
+                       # Handle swapping here
+                       pass
+                self.itemHolding = None
+                self.slotToSwap = None
+        
     def update(self):
         self.timer.update()
         self.handleRendering()
