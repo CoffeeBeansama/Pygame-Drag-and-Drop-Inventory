@@ -7,9 +7,8 @@ from timer import Timer
 from mouse import Mouse
 
 class MouseItemObject:
-    def __init__(self,data,sprite):
+    def __init__(self,data):
         self.data = data
-        self.sprite = sprite
 
 class Inventory:
     def __init__(self):
@@ -102,23 +101,23 @@ class Inventory:
         return False
 
     def handleMouseEvent(self):
-        for slot in self.P_itemSlots:
+        for slot in self.P_itemSlots + self.S_itemSlots:
             if slot.background:
                 if slot.background.collidepoint(Mouse.mousePosition()):
                     if self.canHoldItem():
-                       self.itemHolding = MouseItemObject(slot.itemData,self.imageSprites[slot.itemData])
+                       self.itemHolding = MouseItemObject(slot.itemData)
                        self.slotToSwap = slot
                        self.timer.activate()
 
         if Mouse.pressingMouseButton() and self.itemHolding:
-           self.screen.blit(self.itemHolding.sprite,
+           if self.itemHolding.data:
+              self.screen.blit(self.imageSprites[self.itemHolding.data],
                             (Mouse.mousePosition()[0]-20,Mouse.mousePosition()[1]-20))
         else:
             if self.itemHolding:
                 for slot in self.P_itemSlots + self.S_itemSlots:
                     if slot.background.collidepoint(Mouse.mousePosition()):
-                       # Handle swapping here
-                       pass
+                       self.slotToSwap.itemData,slot.itemData = slot.itemData,self.slotToSwap.itemData
                 self.itemHolding = None
                 self.slotToSwap = None
         
