@@ -18,8 +18,8 @@ class Main:
         self.clock = pg.time.Clock()
 
         self.font = pg.font.Font(fontpath,26)
-        self.purchaseText = self.font.render("Inventory",True,white)
-
+        self.openText = self.font.render(" Open Inventory",True,white)
+        self.closeText = self.font.render(" Close Inventory",True,white) 
         self.timer = Timer(300)
         self.inventory = Inventory()
 
@@ -27,12 +27,13 @@ class Main:
     
     def handleInventoryButton(self):
         # Rendering
-        self.inventoryButton = drawButton(self.screen,530,430,150,50,self.purchaseText)
+        width = 245 if not self.renderInventory else 255
+        text = self.openText if not self.renderInventory else self.closeText
+        self.inventoryButton = drawButton(self.screen,220,430,width,50,text)
 
         # Event
         if self.inventoryButton.collidepoint(Mouse.mousePosition()):
             if Mouse.pressingMouseButton() and not self.timer.activated:
-                print("Open Inventory" if not self.renderInventory else "Close Inventory")
                 self.renderInventory = True if not self.renderInventory else False
                 self.timer.activate()
 

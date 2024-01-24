@@ -1,14 +1,17 @@
 import pygame as pg
 import os
-from inventoryslot import InventorySlot
 from support import drawBox,loadSprite,getImageNamesInFolder
 from settings import spritepath
 from timer import Timer
 from mouse import Mouse
 
-class MouseItemObject:
-    def __init__(self,data):
-        self.data = data
+
+class InventorySlot:
+    def __init__(self,pos,data):        
+        self.pos = pos
+        self.background = None
+        self.itemData = data
+        self.itemSprite = None
 
 class Inventory:
     def __init__(self):
@@ -20,7 +23,7 @@ class Inventory:
         self.initializePrimaryInventory()
         self.initializeSecondaryInventory()
         
-        self.itemHolding = None
+        self.mouseObjectSprite = None
         
         self.slotToSwap = None
 
@@ -92,34 +95,40 @@ class Inventory:
             slot.background = drawBox(self.screen,slot.pos[0],slot.pos[1],self.slotSize,self.slotSize)
             if slot.itemData:
                slot.itemSprite = self.screen.blit(self.imageSprites[slot.itemData],(slot.pos[0]+3,slot.pos[1]+3))
-    
+        
 
     def canHoldItem(self):
         if Mouse.pressingMouseButton() and not self.timer.activated:
-           if self.itemHolding is None:
+           if self.slotToSwap is None:
               return True
         return False
+    
+    def mouseObject(self,sprite):        
+        return self.screen.blit(sprite,(Mouse.mousePosition()[0]-20,Mouse.mousePosition()[1]-20))
+
+    def onMouseRelease(self):
+        if self.slotToSwap:
+           for slot in self.P_itemSlots + self.S_itemSlots:
+               if slot.background.collidepoint(Mouse.mousePosition()):
+                  self.slotToSwap.itemData,slot.itemData = slot.itemData,self.slotToSwap.itemData
+           self.mouseObjectSprite = None
+           self.slotToSwap = None
 
     def handleMouseEvent(self):
         for slot in self.P_itemSlots + self.S_itemSlots:
             if slot.background:
                 if slot.background.collidepoint(Mouse.mousePosition()):
                     if self.canHoldItem():
-                       self.itemHolding = MouseItemObject(slot.itemData)
+                       self.mouseObjectSprite = self.imageSprites[slot.itemData] if slot.itemData is not None else None
                        self.slotToSwap = slot
                        self.timer.activate()
 
-        if Mouse.pressingMouseButton() and self.itemHolding:
-           if self.itemHolding.data:
-              self.screen.blit(self.imageSprites[self.itemHolding.data],
-                            (Mouse.mousePosition()[0]-20,Mouse.mousePosition()[1]-20))
+        # Mouse Object
+        if Mouse.pressingMouseButton() and self.mouseObjectSprite:
+           self.mouseObject(self.mouseObjectSprite)
         else:
-            if self.itemHolding:
-                for slot in self.P_itemSlots + self.S_itemSlots:
-                    if slot.background.collidepoint(Mouse.mousePosition()):
-                       self.slotToSwap.itemData,slot.itemData = slot.itemData,self.slotToSwap.itemData
-                self.itemHolding = None
-                self.slotToSwap = None
+           self.onMouseRelease()
+        
         
     def update(self):
         self.timer.update()
