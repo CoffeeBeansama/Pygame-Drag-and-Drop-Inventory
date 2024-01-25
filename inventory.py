@@ -75,23 +75,23 @@ class Inventory:
     def initializePrimaryInventory(self):
 
         # Slots
-        self.P_xPos,self.P_yPos = 10,315
-        self.P_width,self.P_height = 680,100
+        self.xPos,self.yPos = 10,315
+        self.width,self.height = 680,100
         
-        self.P_itemSlots = []
-        self.P_maxSlots = 8
+        self.itemSlots = []
+        self.maxSlots = 8
 
-        self.P_slotXStart = 25
+        self.slotXStart = 25
         yPos = 330
 
         # Default Items
         self.items = getImageNamesInFolder(spritepath)  
 
         # Slots
-        for index in range(self.P_maxSlots):
-            xPos = self.P_slotXStart + (index * self.slotXOffset)
+        for index in range(self.maxSlots):
+            xPos = self.slotXStart + (index * self.slotXOffset)
             newSlot = InventorySlot((xPos,yPos),self.items[index])
-            self.P_itemSlots.append(newSlot)
+            self.itemSlots.append(newSlot)
                 
         # Sprites
         self.imageSprites = {}
@@ -104,10 +104,10 @@ class Inventory:
 
     def handleRendering(self):         
         # Primary Inventory
-        P_background = drawBox(self.screen,self.P_xPos,self.P_yPos,
-                             self.P_width,self.P_height)
+        background = drawBox(self.screen,self.xPos,self.yPos,
+                             self.width,self.height)
 
-        for slot in self.P_itemSlots:
+        for slot in self.itemSlots:
             slot.background = drawBox(self.screen,slot.pos[0],slot.pos[1],self.slotSize,self.slotSize)
             if slot.itemData:
                slot.itemSprite = self.screen.blit(self.imageSprites[slot.itemData],(slot.pos[0]+3,slot.pos[1]+3))
@@ -127,7 +127,7 @@ class Inventory:
 
     def onMouseRelease(self):
         if self.slotToSwap:
-           for slot in self.P_itemSlots + self.itemChest.itemSlots:
+           for slot in self.itemSlots + self.itemChest.itemSlots:
                if slot.background.collidepoint(Mouse.mousePosition()):
                   self.slotToSwap.itemData,slot.itemData = slot.itemData,self.slotToSwap.itemData
            self.mouseObjectSprite = None
@@ -136,7 +136,7 @@ class Inventory:
     def handleMouseEvent(self):
         if not self.itemChest: return
 
-        for slot in self.P_itemSlots + self.itemChest.itemSlots:
+        for slot in self.itemSlots + self.itemChest.itemSlots:
             if slot.background:
                 if slot.background.collidepoint(Mouse.mousePosition()):
                     if self.canHoldItem():
