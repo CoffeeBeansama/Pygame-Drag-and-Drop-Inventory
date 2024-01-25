@@ -13,6 +13,49 @@ class InventorySlot:
         self.itemData = data
         self.itemSprite = None
 
+class ChestInventory:
+    def __init__(self):
+        self.screen = pg.display.get_surface()
+        # Sprites
+        self.items = getImageNamesInFolder(spritepath)  
+        self.imageSprites = {}
+        spriteSize = (62,62)
+        for item in self.items:
+            self.imageSprites[item] = loadSprite(f"{spritepath}{item}.png",spriteSize)
+
+        # Item Slots
+        self.xPos,self.yPos = 10,20
+        self.width,self.height = 680,280
+
+        self.itemSlots = []
+        self.maxSlots = 32
+
+        self.slotXStart = 25
+
+        rows,columns = 3,8
+        yPos = 40
+
+        self.slotSize = 70
+        self.slotXOffset = 83
+
+        for i in range(rows):
+            for j in range(columns):
+                xPos = self.slotXStart + (j * self.slotXOffset)
+                self.itemSlots.append(InventorySlot((xPos,yPos),None))
+            yPos += 85
+
+    def handleRendering(self):
+        background = drawBox(self.screen,self.xPos,self.yPos,
+                             self.width,self.height)
+
+        for slot in self.itemSlots:
+            slot.background = drawBox(self.screen,slot.pos[0],slot.pos[1],self.slotSize,self.slotSize)
+            if slot.itemData:
+               slot.itemSprite = self.screen.blit(self.imageSprites[slot.itemData],(slot.pos[0]+3,slot.pos[1]+3))
+         
+    def update(self):
+        self.handleRendering()
+
 class Inventory:
     def __init__(self):
         self.screen = pg.display.get_surface()
@@ -21,11 +64,11 @@ class Inventory:
         self.slotXOffset = 83
 
         self.initializePrimaryInventory()
-        self.initializeSecondaryInventory()
         
         self.mouseObjectSprite = None
-        
         self.slotToSwap = None
+
+        self.itemChest = None
 
         self.timer = Timer(300)
 
@@ -57,23 +100,6 @@ class Inventory:
             self.imageSprites[item] = loadSprite(f"{spritepath}{item}.png",spriteSize)
 
 
-    def initializeSecondaryInventory(self):
-        self.S_xPos,self.S_yPos = 10,20
-        self.S_width,self.S_height = 680,280
-
-        self.S_itemSlots = []
-        self.S_maxSlots = 32
-
-        self.S_slotXStart = 25
-
-        rows,columns = 3,8
-        yPos = 40
-
-        for i in range(rows):
-            for j in range(columns):
-                xPos = self.S_slotXStart + (j * self.slotXOffset)
-                self.S_itemSlots.append(InventorySlot((xPos,yPos),None))
-            yPos += 85
 
 
     def handleRendering(self):         
@@ -85,17 +111,10 @@ class Inventory:
             slot.background = drawBox(self.screen,slot.pos[0],slot.pos[1],self.slotSize,self.slotSize)
             if slot.itemData:
                slot.itemSprite = self.screen.blit(self.imageSprites[slot.itemData],(slot.pos[0]+3,slot.pos[1]+3))
-
-
-        # Secondary Inventory  
-        S_background = drawBox(self.screen,self.S_xPos,self.S_yPos,
-                             self.S_width,self.S_height)
-
-        for slot in self.S_itemSlots:
-            slot.background = drawBox(self.screen,slot.pos[0],slot.pos[1],self.slotSize,self.slotSize)
-            if slot.itemData:
-               slot.itemSprite = self.screen.blit(self.imageSprites[slot.itemData],(slot.pos[0]+3,slot.pos[1]+3))
         
+        # Secondary Inventory
+        if self.itemChest:
+           self.itemChest.handleRendering()
 
     def canHoldItem(self):
         if Mouse.pressingMouseButton() and not self.timer.activated:
@@ -108,14 +127,16 @@ class Inventory:
 
     def onMouseRelease(self):
         if self.slotToSwap:
-           for slot in self.P_itemSlots + self.S_itemSlots:
+           for slot in self.P_itemSlots + self.itemChest.itemSlots:
                if slot.background.collidepoint(Mouse.mousePosition()):
                   self.slotToSwap.itemData,slot.itemData = slot.itemData,self.slotToSwap.itemData
            self.mouseObjectSprite = None
            self.slotToSwap = None
 
     def handleMouseEvent(self):
-        for slot in self.P_itemSlots + self.S_itemSlots:
+        if not self.itemChest: return
+
+        for slot in self.P_itemSlots + self.itemChest.itemSlots:
             if slot.background:
                 if slot.background.collidepoint(Mouse.mousePosition()):
                     if self.canHoldItem():

@@ -1,10 +1,11 @@
 import pygame as pg
 import sys
-from inventory import Inventory
+from inventory import Inventory,ChestInventory
 from mouse import Mouse
 from settings import fontpath,white
 from timer import Timer
-from support import drawButton
+from support import drawButton,getImageNamesInFolder
+from itemchest import ItemChest
 
 class Main:
     def __init__(self):
@@ -22,8 +23,26 @@ class Main:
         self.closeText = self.font.render(" Close Inventory",True,white) 
         self.timer = Timer(300)
         self.inventory = Inventory()
-
+        
         self.renderInventory = False
+        
+        self.createItemChests()
+    
+    def createItemChests(self):
+        self.visibleSprites = pg.sprite.Group()
+
+        chestSpritePath = "Sprites/Chests/"
+        xStart = 100
+        offset  = 200
+        
+        self.itemChestInventory = [ChestInventory() for index in range(3)]
+        self.itemChestObjects = [ItemChest(sprite,
+                                           self.itemChestInventory[index],
+                                           (xStart + (index * offset),100),
+                                           self.visibleSprites) 
+                                            for index,sprite in enumerate(getImageNamesInFolder(chestSpritePath))]
+
+
     
     def handleInventoryButton(self):
         # Rendering
@@ -35,7 +54,15 @@ class Main:
         if self.inventoryButton.collidepoint(Mouse.mousePosition()):
             if Mouse.pressingMouseButton() and not self.timer.activated:
                 self.renderInventory = True if not self.renderInventory else False
+                self.inventory.itemChest = None
                 self.timer.activate()
+        
+        for chest in self.itemChestObjects:
+            if chest.rect.collidepoint(Mouse.mousePosition()):
+               if Mouse.pressingMouseButton() and not self.timer.activated:
+                  self.renderInventory = True
+                  self.inventory.itemChest = chest.inventory
+                  self.timer.activate()
 
 
     def run(self):
@@ -50,6 +77,9 @@ class Main:
             self.timer.update()
             Mouse.handleMouseUpdate()
             
+
+            self.visibleSprites.draw(self.screen)
+
             self.handleInventoryButton()
 
             if self.renderInventory:
